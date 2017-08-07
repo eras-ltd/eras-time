@@ -10,8 +10,29 @@
     <script src="../../web-component-tester/browser.js"></script>
 
     <link rel="import" href="../eras-time.html">
+    <link rel="import" href="../eras-ampm-switch.html">
   </head>
   <body>
+
+    <test-fixture id='ampm-fixture'>
+      <template>
+        <eras-ampm-switch id='ampm-element'></eras-ampm-switch>
+      </template>
+    </test-fixture>
+    <script>
+      suite('eras-ampm-switch', function(){
+        var el;
+
+        setup(function(){
+          el = fixture('ampm-fixture');
+        });
+
+        test('instantiation', function() {
+          assert.equal(el.is, 'eras-ampm-switch');
+        });
+      });
+    </script>
+
     <test-fixture id="basic">
       <template>
         <eras-time></eras-time>
@@ -20,7 +41,7 @@
 
     <script>
       suite('eras-time', function() {
-        test('instantiating the element works', function() {
+        test('instantiation', function() {
           var element = fixture('basic');
           assert.equal(element.is, 'eras-time');
         });

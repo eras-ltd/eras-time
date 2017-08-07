@@ -1,0 +1,88 @@
+<link rel='import' href='../polymer/polymer.html'>
+<link rel='import' href='../iron-flex-layout/iron-flex-layout-classes.html'>
+<link rel='import' href='../paper-button/paper-button.html'>
+<link rel='import' href='../paper-styles/paper-styles.html'>
+<!--
+`eras-ampm-switch`
+
+### Styling
+
+Property|Description|Default
+--------|-----------|-------
+`--theme-colour`|Toolbar background, checkboxes, etc.|`--primary-color`
+`--height`|Height of the element|`70px`
+
+@demo demo/ampm.html
+-->
+<dom-module id='eras-ampm-switch'>
+  <template>
+    <style include='iron-flex iron-flex-alignment d'>
+       :host {
+        display: block;
+        --height: 70px;
+      }
+
+       :host[value='AM'] #am,
+       :host[value='PM'] #pm {
+        background-color: var(--theme-colour, --primary-color);
+        color: white;
+      }
+
+      #container {
+        height: var(--height, 70px);
+      }
+
+      #am {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom: none;
+      }
+
+      #pm {
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+      }
+
+      paper-button {
+        padding: 2px;
+        min-width: unset;
+        margin: 0;
+        font-size: 12px;
+        line-height: 12px;
+        border: 1px solid var(--paper-grey-300);
+        box-sizing: border-box;
+        width: 40px;
+        color: var(--paper-grey-500);
+        border-radius: 4px;
+      }
+    </style>
+    <div id='container' class='layout vertical center' on-tap='toggle'>
+      <div class='flex'></div>
+      <paper-button id='am'>AM</paper-button>
+      <paper-button id='pm'>PM</paper-button>
+      <div class='flex'></div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'eras-ampm-switch',
+      properties: {
+        value: {
+          type: String,
+          value: 'AM',
+          notify: true,
+          reflectToAttribute: true
+        }
+      },
+      toggle: function () {
+        this.value = this.value.toUpperCase() === 'AM' ? 'PM' : 'AM';
+
+        var buttons = this.querySelectorAll('paper-button[raised]');
+        for (var i = 0; i < buttons.length; i++)
+          Polymer.dom(buttons[i]).removeAttribute('raised');
+
+        this.$$('#' + this.value.toLowerCase()).setAttribute('raised', '');
+      }
+    });
+  </script>
+</dom-module>
