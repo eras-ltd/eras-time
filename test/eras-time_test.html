@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>eras-time test</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../eras-time.html">
+  </head>
+  <body>
+    <test-fixture id="basic">
+      <template>
+        <eras-time></eras-time>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('eras-time', function() {
+        test('instantiating the element works', function() {
+          var element = fixture('basic');
+          assert.equal(element.is, 'eras-time');
+        });
+      });
+    </script>
+  </body>
+</html>
