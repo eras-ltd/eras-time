@@ -4,12 +4,17 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^1.9.0",
     "iron-flex-layout": "1",
-    "paper-button": "1"
+    "paper-button": "1",
+    "neon-animation": "1",
+    "paper-icon-button": "1",
+    "paper-ripple": "PolymerElements/paper-ripple#1",
+    "eras-external": "eras-ltd/eras-external#^0.0.1"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
     "web-component-tester": "Polymer/web-component-tester#^6.0.0",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "iron-test-helpers": "1"
   }
 }

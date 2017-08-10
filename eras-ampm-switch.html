@@ -10,7 +10,7 @@
 Property|Description|Default
 --------|-----------|-------
 `--theme-colour`|Toolbar background, checkboxes, etc.|`--primary-color`
-`--height`|Height of the element|`70px`
+`--ampm-switch-width`|Width of the element|`40px`
 
 @demo demo/ampm.html
 -->
@@ -19,17 +19,22 @@ Property|Description|Default
     <style include='iron-flex iron-flex-alignment d'>
        :host {
         display: block;
-        --height: 70px;
+        width: var(--ampm-switch-width, 40px);
+      }
+
+      #am,
+      #pm {
+        box-shadow: inset 0px 0px 3px 1px rgba(0, 0, 0, 0.20);
+        z-index: 100;
+        transition: all 300ms linear;
       }
 
        :host[value='AM'] #am,
        :host[value='PM'] #pm {
         background-color: var(--theme-colour, --primary-color);
         color: white;
-      }
-
-      #container {
-        height: var(--height, 70px);
+        box-shadow: 0px 0px 3px 1px rgba(0, 0, 0, 0.20);
+        z-index: 101;
       }
 
       #am {
@@ -49,17 +54,16 @@ Property|Description|Default
         margin: 0;
         font-size: 12px;
         line-height: 12px;
-        border: 1px solid var(--paper-grey-300);
         box-sizing: border-box;
-        width: 40px;
+        width: var(--ampm-switch-width, 40px);
         color: var(--paper-grey-500);
         border-radius: 4px;
       }
     </style>
-    <div id='container' class='layout vertical center' on-tap='toggle'>
+    <div id='container' class='layout vertical center'>
       <div class='flex'></div>
-      <paper-button id='am'>AM</paper-button>
-      <paper-button id='pm'>PM</paper-button>
+      <paper-button id='am' rasied>AM</paper-button>
+      <paper-button id='pm' raised>PM</paper-button>
       <div class='flex'></div>
     </div>
   </template>
@@ -74,14 +78,11 @@ Property|Description|Default
           reflectToAttribute: true
         }
       },
+      listeners: {
+        'tap':'toggle'
+      },
       toggle: function () {
         this.value = this.value.toUpperCase() === 'AM' ? 'PM' : 'AM';
-
-        var buttons = this.querySelectorAll('paper-button[raised]');
-        for (var i = 0; i < buttons.length; i++)
-          Polymer.dom(buttons[i]).removeAttribute('raised');
-
-        this.$$('#' + this.value.toLowerCase()).setAttribute('raised', '');
       }
     });
   </script>

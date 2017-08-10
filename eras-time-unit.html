@@ -1,0 +1,326 @@
+<link rel='import' href='../polymer/polymer.html'>
+<link rel='import' href='../eras-external/moment.html'>
+<link rel='import' href='../iron-flex-layout/iron-flex-layout-classes.html'>
+<link rel='import' href='../neon-animation/animations/slide-down-animation.html' />
+<link rel='import' href='../neon-animation/animations/slide-from-bottom-animation.html' />
+<link rel='import' href='../neon-animation/animations/slide-from-top-animation.html' />
+<link rel='import' href='../neon-animation/animations/slide-up-animation.html' />
+<link rel='import' href='../neon-animation/neon-animated-pages.html' />
+<link rel='import' href='../paper-icon-button/paper-icon-button.html'>
+<link rel='import' href='../paper-ripple/paper-ripple.html'>
+<!--
+`eras-time-unit`
+
+### Styling
+
+Property|Description|Default
+--------|-----------|-------
+`--time-unit-height`|Height of the element|`70px`
+`--time-unit-width`|Width of the element|`38px`
+`--time-unit-button-height`|Height of the buttons|`20px`
+`--time-unit-font-size`|Size of text|`34px`
+
+@demo demo/unit.html
+-->
+<dom-module id='eras-time-unit'>
+  <template>
+    <style include='iron-flex iron-flex-alignment'>
+       :host {
+        display: block;
+        --element-height: var(--time-unit-height, 70px);
+        --element-width: var(--time-unit-width, 38px);
+        --button-height: var(--time-unit-button-height, 20px);
+        --font-size: var(--time-unit-font-size, 34px);
+        height: var(--element-height);
+        width: var(--element-width);
+      }
+
+      #pages {
+        height: calc(var(--element-height) - var(--button-height) * 2);
+        width: var(--element-width);
+        font-size: var(--font-size);
+        overflow: hidden;
+      }
+
+      #pages>div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #input {
+        height: 100%;
+        width: 100%;
+        padding: 0;
+        border: none;
+        margin: 0;
+        text-align: center;
+        background-color: transparent;
+        font-size: inherit;
+        font-family: inherit;
+      }
+
+      .button {
+        height: var(--button-height);
+        width: var(--element-width);
+        cursor: pointer;
+        position: relative;
+        border-radius: calc(var(--button-height) / 4);
+      }
+
+      .button paper-icon-button {
+        display: none;
+        padding: 0;
+        height: var(--button-height);
+        width: var(--button-height);
+      }
+
+       :host:hover .button paper-icon-button {
+        display: inline-block;
+      }
+    </style>
+
+    <div class='layout verital center'>
+      <div class='button layout horizontal center' on-tap='increase'>
+        <div class='flex'></div>
+        <paper-icon-button icon='expand-less' noink></paper-icon-button>
+        <div class='flex'></div>
+        <paper-ripple></paper-ripple>
+      </div>
+
+      <neon-animated-pages id='pages' selected='{{_page}}' on-tap='_focus' entry-animation='{{_entryAnimation}}' exit-animation='{{_exitAnimation}}'>
+        <input id='input' type='text' on-blur='_blur' maxlength='2' on-keydown='_validate' autocomplete='off' />
+        <div index='1'>X</div>
+        <div index='2'>Y</div>
+      </neon-animated-pages>
+    </div>
+
+    <div class='button layout horizontal center' on-tap='decrease'>
+      <div class='flex'></div>
+      <paper-icon-button icon='expand-more' noink></paper-icon-button>
+      <div class='flex'></div>
+      <paper-ripple></paper-ripple>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'eras-time-unit',
+      properties: {
+        /**
+         * Numeric value for this element
+         */
+        value: {
+          type: Number,
+          value: 0,
+          notify: true,
+          observer: '_valueChanged'
+        },
+
+        /**
+         * Time unit for this element. These are the allowed values:
+         * - `hh`: hours (12)
+         * - `HH`: hours (24)
+         * - `mm`: minutes
+         * - `ss`: seconds
+         */
+        unit: {
+          type: String,
+          value: 'mm',
+          observer: '_unitChanged'
+        },
+
+        /**
+         * The amount by which to increase and decrease the value.
+         */
+        increment: {
+          type: Number,
+          value: 1
+        },
+
+        /**
+         * An associative array of the upper and lower bounds for the accepted units.
+         * @type {{ min: Number, max: Number }[]}
+         */
+        _constraints: {
+          type: Array,
+          readOnly: true,
+          value: {
+            'hh': { min: 1, max: 12 },
+            'HH': { min: 0, max: 23 },
+            'mm': { min: 0, max: 59 },
+            'ss': { min: 0, max: 59 }
+          }
+        },
+
+        /**
+         * An associative array of animations to use when transitioning between pages.
+         * @type {String[]}
+         */
+        _animations: {
+          type: Array,
+          readOnly: true,
+          value: {
+            'to-top': 'slide-up-animation',
+            'to-bottom': 'slide-down-animation',
+            'from-top': 'slide-from-top-animation',
+            'from-bottom': 'slide-from-bottom-animation'
+          }
+        },
+
+        /** The page to show using `neon-animated-pages`. */
+        _page: {
+          type: Number,
+          value: 1
+        },
+
+        /** The animation to use for the incoming `neon-animated-pages` page */
+        _entryAnimation: {
+          type: String,
+          value: ""
+        },
+
+        /** The animation to use for the outgoing `neon-animated-pages` page */
+        _exitAnimation: {
+          type: String,
+          value: ""
+        }
+      },
+
+      attached: function () {
+        var page = this.$.pages.querySelector('div[index="1"]');
+        page.textContent = moment(this.value, this.unit).format(this.unit);
+        this._page = 1;
+      },
+
+      /**
+       * Increases the `value` by the specified `increment`.
+       * Rounds to next increment: 7 + 5 = 10
+       */
+      increase: function () {
+        this._entryAnimation = this._animations['from-bottom'];
+        this._exitAnimation = this._animations['to-top'];
+
+        // round to next increment
+        var newValue = Math.floor(this.value / this.increment) * this.increment + this.increment;        
+        this._change(newValue);
+      },
+
+      /**
+       * Decreases the `value` by the specified `increment`.
+       * Rounds to next increment: 7 - 5 = 5
+       */
+      decrease: function () {        
+        this._entryAnimation = this._animations['from-top'];
+        this._exitAnimation = this._animations['to-bottom'];
+
+        // round to previous increment
+        var newValue = Math.ceil(this.value / this.increment) * this.increment - this.increment;            
+        this._change(newValue);
+      },
+
+      /** 
+        * Updates the content of the next page and switches to it. 
+        * If the value is outside of min/max then it loops back round.         
+        */
+      _change: function (newValue) {
+        var min = this._constraints[this.unit].min;
+        var max = this._constraints[this.unit].max;
+
+        // if the new value > max then loop back to min value
+        if(newValue > max)
+          newValue = min;
+        // if the new value < min then loop back to max value
+        else if(newValue < min)
+          newValue = max;
+
+        this.value = newValue;
+        var nextPage = this.$.pages.querySelector('div:not([index="' + this._page + '"])');
+        nextPage.textContent = moment(this.value, this.unit).format(this.unit);
+        this._page = nextPage.getAttribute('index');
+      },
+
+      /** 
+       * Called when the element is click on, this function
+       * clears the animations (so page change is instant)
+       * and any value in the input, then switches the page 
+       * to the input and focuses on it.
+       */
+      _focus: function () {
+        this._entryAnimation = "";
+        this._exitAnimation = "";
+        this.$.input.value = "";
+        this._page = 0;
+        this.$.input.focus();
+      },
+
+      /**
+       * Called when the user clicks elsewhere, this function
+       * will verify the value and bring it back with in the 
+       * min/max if necessary (in contrast to `_change()` it
+       * does not loop but coerces instead).
+       */
+      _blur: function () {
+        this._entryAnimation = "";
+        this._exitAnimation = "";
+
+        var min = this._constraints[this.unit].min;
+        var max = this._constraints[this.unit].max;
+
+        var newValue = this.$.input.value;
+
+        // if no new value has been entered just use the current value
+        // we can't just drop out of this function with a `return` as
+        // the page must be changed to a display of the current value.
+        if(!newValue)
+          newValue = this.value;
+
+        // coerce the the new value to fall within min/max
+        if(newValue > max)
+          newValue = max;
+        else if(newValue < min)
+          newValue = min;
+        
+        this._change(newValue);
+      },
+
+      /**
+       * Prevents non numerics from being entered, but allows deletion and navigation.
+       */
+      _validate: function (e) {
+        var regex = /^([0-9]|Backspace|Delete|ArrowLeft|ArrowRight)$/;
+        if(!regex.test(e.key)) 
+          e.preventDefault();
+      },
+
+      /**
+       * Observer function that ensures `unit` is set to a valid value
+       * @param unit The new value for `unit`
+       */
+      _unitChanged: function (unit) {
+        var accepted = ['hh', 'HH', 'mm', 'ss'];
+        if (accepted.indexOf(unit) < 0) {
+          console.warn('"' + unit + '" is not a valid value for `unit`. Defaulting to "mm". Valid values are: ' + accepted);
+          this.unit = 'mm';
+        }
+      },
+
+      /**
+       * Observer function that ensures `value` is set to a valid value 
+       * for the selected `unit` (eg: value is between 0 and 60 for minutes)
+       * @param value The new value for `value`
+       */
+      _valueChanged: function (value) {
+        if (!value || !this.unit || !this._constraints)
+          return;
+
+        var min = this._constraints[this.unit].min;
+        var max = this._constraints[this.unit].max;
+
+        if (value < min || value > max) {
+          console.warn('when `unit` is set to "' + this.unit + '" `value` must be between ' + min + ' and ' + max + ': ' + value);
+          this.value = value < min ? min : max;
+        }
+      }
+    });
+  </script>
+</dom-module>
