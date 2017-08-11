@@ -11,6 +11,7 @@
   <script src="../../web-component-tester/browser.js"></script>
 
   <script src='../bower_components/iron-test-helpers/mock-interactions.js'></script>
+  <link rel="import" href="../bower_components/eras-external/moment.html">
   <link rel="import" href="../eras-time.html">
   <link rel="import" href="../eras-ampm-switch.html">
   <link rel="import" href="../eras-time-unit.html">
@@ -458,7 +459,7 @@
         });
       });
 
-      test('change', function(done){        
+      test('change', function (done) {
         el._change(5);
         assert.equal(2, el._page, 'expected to be on page 2');
         assert.equal(5, el.value, 'expected value to have been updated');
@@ -467,7 +468,7 @@
     });
   </script>
 
-  <test-fixture id="basic">
+  <test-fixture id="time-fixture">
     <template>
       <eras-time></eras-time>
     </template>
@@ -475,10 +476,58 @@
 
   <script>
     suite('eras-time', function () {
+      var el;
+
+      setup(function () {
+        el = fixture('time-fixture');
+        el.value = '11:30 AM';
+        el.minutesIncrement = 5;
+      });
+
       test('instantiation', function (done) {
-        var element = fixture('basic');
-        assert.equal(element.is, 'eras-time');
+        assert.equal(el.is, 'eras-time');
         done();
+      });
+
+      suite('integration', function () {
+        suite('hours', function () {
+          test('increase', function (done) {
+            var target = el.$.hours.$.increase;
+            MockInteractions.tap(target);
+            assert.equal('12:30 AM', el.value, 'expected value to have increased by one hour');
+            done();
+          });
+
+          test('decrease', function (done) {
+            var target = el.$.hours.$.decrease;
+            MockInteractions.tap(target);
+            assert.equal('10:30 AM', el.value, 'expected value to have decreased by one hour');
+            done();
+          });
+        });
+
+        suite('minutes', function () {
+          test('increase', function (done) {
+            var target = el.$.minutes.$.increase;
+            MockInteractions.tap(target);
+            assert.equal('11:35 AM', el.value, 'expected value to have increased by 5 mins');
+            done();
+          });
+
+          test('decrease', function (done) {
+            var target = el.$.minutes.$.decrease;
+            MockInteractions.tap(target);
+            assert.equal('11:25 AM', el.value, 'expected value to have decreased by 5 mins');
+            done();
+          });
+        });
+
+        test('period', function (done) {
+          var target = el.$.period;
+          MockInteractions.tap(target);
+          assert.equal('11:30 PM', el.value, 'expected period to have changed to PM');
+          done();
+        });
       });
     });
   </script>

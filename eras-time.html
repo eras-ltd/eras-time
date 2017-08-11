@@ -1,4 +1,8 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel='import' href='../iron-flex-layout/iron-flex-layout-classes.html'>
+<link rel='import' href='../eras-external/moment.html'>
+<link rel='import' href='../eras-time/eras-time-unit.html'>
+<link rel='import' href='../eras-time/eras-ampm-switch.html'>
 
 <!--
 `eras-time`
@@ -9,26 +13,132 @@
 
 <dom-module id="eras-time">
   <template>
-    <style>
-      :host {
-        display: block;
+    <style include='iron-flex iron-flex-alignment'>
+       :host {
+        display: inline-block;
+      }
+
+      #container>div {
+        font-size: 30px;
+        margin-bottom: 6px;
+        text-align: center;
       }
     </style>
-    <h2>Hello [[prop1]]!</h2>
+
+    <div id='container' class='layout horizontal center'>
+      <eras-time-unit id='hours' value='{{hours}}' unit='hh' increment='1'></eras-time-unit>
+      <div>:</div>
+      <eras-time-unit id='minutes' value='{{minutes}}' unit='mm' increment='{{minutesIncrement}}'></eras-time-unit>
+      <eras-ampm-switch id='period' value='{{period}}'></eras-ampm-switch>
+    </div>
+
   </template>
 
   <script>
     Polymer({
-
       is: 'eras-time',
-
       properties: {
-        prop1: {
+        /**
+         * The time currently represented by the element
+         * stored as a "hh:mm A" string (http://momentjs.com/docs/#/displaying/format/)
+         * @type {String}
+         */
+        value: {
           type: String,
-          value: 'eras-time',
+          value: function () {
+            return moment().format('hh:mm A');
+          },
+          notify: true
+        },
+
+        /**
+         * The hour unit
+         * @type {Number}
+         */
+        hours: {
+          type: Number,
+          value: 0
+        },
+
+        /**
+         * The minute unit
+         * @type {Number}
+         */
+        minutes: {
+          type: Number,
+          value: 0
+        },
+
+        /**
+         * The "period" (am/pm) unit
+         * @type {String}
+         */
+        period: {
+          type: String,
+          value: 'AM'
+        },
+
+        /**
+         * The number of minutes to increase/decrease by
+         * at a time.
+         * @type {Number}
+         */
+        minutesIncrement: {
+          type: Number,
+          value: 5
+        },
+
+        /**
+         * Convenience property that allows you to turn off
+         * observers
+         * @type {Boolean}
+         */
+        _observe: {
+          type: Boolean,
+          value: false
         },
       },
 
+      observers: [
+        '_unitChanged(hours, minutes, period)',
+        '_valueChanged(value)'
+      ],
+
+      attached: function () {
+        // populate the unit properties from `value`
+        var m = moment(this.value, 'hh:mm A');
+        this.hours = parseInt(m.format('hh'));
+        this.minutes = parseInt(m.format('mm'));
+        this.period = m.format('A');
+
+        this._observe = true;
+      },
+
+      _unitChanged: function (hours, minutes, period) {
+        if (!this._observe)
+          return;
+
+        this._observe = false;
+        
+        this.value = moment(hours + ':' + minutes + ' ' + period, 'hh:mm A').format('hh:mm A');
+
+        this._observe = true;
+      },
+
+      _valueChanged: function (value) {
+        if (!this._observe)
+          return;
+
+        this._observe = false;
+
+        // populate the unit properties from `value`
+        var m = moment(this.value, 'hh:mm A');
+        this.hours = parseInt(m.format('hh'));
+        this.minutes = parseInt(m.format('mm'));
+        this.period = m.format('A');
+
+        this._observe = true;
+      }
     });
   </script>
 </dom-module>

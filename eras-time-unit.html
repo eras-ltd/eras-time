@@ -33,6 +33,7 @@ Property|Description|Default
         --font-size: var(--time-unit-font-size, 34px);
         height: var(--element-height);
         width: var(--element-width);
+        margin: 0 5px;
       }
 
       #pages {
@@ -81,7 +82,7 @@ Property|Description|Default
     </style>
 
     <div class='layout verital center'>
-      <div class='button layout horizontal center' on-tap='increase'>
+      <div id='increase' class='button layout horizontal center' on-tap='increase'>
         <div class='flex'></div>
         <paper-icon-button icon='expand-less' noink></paper-icon-button>
         <div class='flex'></div>
@@ -95,7 +96,7 @@ Property|Description|Default
       </neon-animated-pages>
     </div>
 
-    <div class='button layout horizontal center' on-tap='decrease'>
+    <div id='decrease' class='button layout horizontal center' on-tap='decrease'>
       <div class='flex'></div>
       <paper-icon-button icon='expand-more' noink></paper-icon-button>
       <div class='flex'></div>
@@ -183,13 +184,24 @@ Property|Description|Default
         _exitAnimation: {
           type: String,
           value: ""
-        }
+        },
+
+        /**
+         * Convenience property that allows you to turn off
+         * observers
+         * @type {Boolean}
+         */
+        _observe: {
+          type: Boolean,
+          value: false
+        },
       },
 
       attached: function () {
         var page = this.$.pages.querySelector('div[index="1"]');
         page.textContent = moment(this.value, this.unit).format(this.unit);
         this._page = 1;
+        this._observe = true;
       },
 
       /**
@@ -197,11 +209,10 @@ Property|Description|Default
        * Rounds to next increment: 7 + 5 = 10
        */
       increase: function () {
-        this._entryAnimation = this._animations['from-bottom'];
-        this._exitAnimation = this._animations['to-top'];
+        this._setAnimations(1);
 
         // round to next increment
-        var newValue = Math.floor(this.value / this.increment) * this.increment + this.increment;        
+        var newValue = Math.floor(this.value / this.increment) * this.increment + this.increment;
         this._change(newValue);
       },
 
@@ -209,13 +220,30 @@ Property|Description|Default
        * Decreases the `value` by the specified `increment`.
        * Rounds to next increment: 7 - 5 = 5
        */
-      decrease: function () {        
-        this._entryAnimation = this._animations['from-top'];
-        this._exitAnimation = this._animations['to-bottom'];
+      decrease: function () {
+        this._setAnimations(-1);
 
         // round to previous increment
-        var newValue = Math.ceil(this.value / this.increment) * this.increment - this.increment;            
+        var newValue = Math.ceil(this.value / this.increment) * this.increment - this.increment;
         this._change(newValue);
+      },
+
+      /**
+       * Sets the entry/exit animations depending on change in 
+       * the value
+       * @param {Number} change
+       */
+      _setAnimations: function (change) {
+        if (change > 0) {
+          this._entryAnimation = this._animations['from-bottom'];
+          this._exitAnimation = this._animations['to-top'];
+        } else if (change < 0) {
+          this._entryAnimation = this._animations['from-top'];
+          this._exitAnimation = this._animations['to-bottom'];
+        } else {
+          this._entryAnimation = "";
+          this._exitAnimation = "";
+        }
       },
 
       /** 
@@ -223,20 +251,22 @@ Property|Description|Default
         * If the value is outside of min/max then it loops back round.         
         */
       _change: function (newValue) {
+        this._observe = false;
         var min = this._constraints[this.unit].min;
         var max = this._constraints[this.unit].max;
 
         // if the new value > max then loop back to min value
-        if(newValue > max)
+        if (newValue > max)
           newValue = min;
         // if the new value < min then loop back to max value
-        else if(newValue < min)
+        else if (newValue < min)
           newValue = max;
 
         this.value = newValue;
         var nextPage = this.$.pages.querySelector('div:not([index="' + this._page + '"])');
         nextPage.textContent = moment(this.value, this.unit).format(this.unit);
         this._page = nextPage.getAttribute('index');
+        this._observe = true;
       },
 
       /** 
@@ -246,8 +276,7 @@ Property|Description|Default
        * to the input and focuses on it.
        */
       _focus: function () {
-        this._entryAnimation = "";
-        this._exitAnimation = "";
+        this._setAnimations(0);
         this.$.input.value = "";
         this._page = 0;
         this.$.input.focus();
@@ -260,9 +289,7 @@ Property|Description|Default
        * does not loop but coerces instead).
        */
       _blur: function () {
-        this._entryAnimation = "";
-        this._exitAnimation = "";
-
+        this._setAnimations(0);
         var min = this._constraints[this.unit].min;
         var max = this._constraints[this.unit].max;
 
@@ -271,15 +298,15 @@ Property|Description|Default
         // if no new value has been entered just use the current value
         // we can't just drop out of this function with a `return` as
         // the page must be changed to a display of the current value.
-        if(!newValue)
+        if (!newValue)
           newValue = this.value;
 
         // coerce the the new value to fall within min/max
-        if(newValue > max)
+        if (newValue > max)
           newValue = max;
-        else if(newValue < min)
+        else if (newValue < min)
           newValue = min;
-        
+
         this._change(newValue);
       },
 
@@ -288,7 +315,7 @@ Property|Description|Default
        */
       _validate: function (e) {
         var regex = /^([0-9]|Backspace|Delete|ArrowLeft|ArrowRight)$/;
-        if(!regex.test(e.key)) 
+        if (!regex.test(e.key))
           e.preventDefault();
       },
 
@@ -307,19 +334,24 @@ Property|Description|Default
       /**
        * Observer function that ensures `value` is set to a valid value 
        * for the selected `unit` (eg: value is between 0 and 60 for minutes)
-       * @param value The new value for `value`
+       * and updates the UI
+       * @param newValue The new value for `value`
+       * @param oldValue The previous value for `value`
        */
-      _valueChanged: function (value) {
-        if (!value || !this.unit || !this._constraints)
+      _valueChanged: function (newValue, oldValue) {        
+        if (!newValue || !this.unit || !this._constraints || !this._observe)
           return;
 
         var min = this._constraints[this.unit].min;
         var max = this._constraints[this.unit].max;
 
-        if (value < min || value > max) {
-          console.warn('when `unit` is set to "' + this.unit + '" `value` must be between ' + min + ' and ' + max + ': ' + value);
-          this.value = value < min ? min : max;
+        if (newValue < min || newValue > max) {
+          console.warn('when `unit` is set to "' + this.unit + '" `value` must be between ' + min + ' and ' + max + ': ' + newValue);
+          newValue = newValue < min ? min : max;
         }
+
+        this._setAnimations(newValue - oldValue);
+        this._change(newValue);
       }
     });
   </script>
