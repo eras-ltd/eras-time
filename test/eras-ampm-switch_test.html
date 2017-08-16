@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang='en'>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'>
+
+  <title>eras-ampm-switch test</title>
+
+  <script src='../../webcomponentsjs/webcomponents-lite.js'></script>
+  <script src='../../web-component-tester/browser.js'></script>
+
+  <script src='../bower_components/iron-test-helpers/mock-interactions.js'></script>
+  <link rel='import' href='../eras-ampm-switch.html'>
+</head>
+
+<body>
+  <template is='dom-bind' id='ampm-template'>
+    <eras-ampm-switch id='ampm-element' value='{{value}}'></eras-ampm-switch>
+  </template>
+  <script>
+    var ampmApp = document.querySelector('#ampm-template');
+    ampmApp.value = 'AM';
+
+    suite('eras-ampm-switch', function () {
+      var el;
+
+      setup(function () {
+        el = document.querySelector('#ampm-element');
+        el.value = 'AM';
+      });
+
+      test('instantiation', function () {
+        assert.equal(el.is, 'eras-ampm-switch');
+      });
+
+      test('click', function () {
+        assert.equal('AM', el.value);
+        el.click();
+        assert.equal('PM', el.value);
+        assert.equal(el.value, ampmApp.value);
+      });
+    });
+  </script>
+</body>
+
+</html>

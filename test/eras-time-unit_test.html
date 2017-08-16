@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang='en'>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'>
+
+  <title>eras-time-unit test</title>
+
+  <script src='../../webcomponentsjs/webcomponents-lite.js'></script>
+  <script src='../../web-component-tester/browser.js'></script>
+
+  <script src='../bower_components/iron-test-helpers/mock-interactions.js'></script>
+  <link rel='import' href='../eras-time-unit.html'>
+</head>
+
+<body>
+  <test-fixture id='unit-fixture'>
+    <template>
+      <eras-time-unit id='unit-element' value='30' unit='mm'></eras-time-unit>
+    </template>
+  </test-fixture>
+  <script>
+    suite('eras-time-unit', function () {
+      var el;
+
+      setup(function () {
+        el = fixture('unit-fixture');
+      });
+
+      suite('basic', function () {
+        test('instantiation', function (done) {
+          assert.equal(el.is, 'eras-time-unit');
+          done();
+        });
+
+        test('unit', function (done) {
+          var w = console.warn;
+          console.warn = function () { };
+          el.unit = 'xx';
+          console.warn = w;
+          assert.equal('mm', el.unit, 'expected `el.unit` to default to "mm" but it is "' + el.unit + '"');
+          done();
+        });
+
+        suite('value coercion', function () {
+          var w;
+
+          setup(function () {
+            w = console.warn;
+            console.warn = function () { };
+          });
+
+          teardown(function () {
+            console.warn = w;
+          });
+
+          var dataTest = function (unit, input, expected) {
+            return function (done) {
+              el.unit = unit;
+              el.value = input;
+              assert.equal(expected, el.value, 'expected `el.value` to be coerced to "' + expected + '" when unit is "' + unit + '" but was "' + el.value + '"');
+              done();
+            };
+          };
+
+          suite('minutes', function () {
+            var data = [
+              { input: -20, expected: 0 },
+              { input: 0, expected: 0 },
+              { input: 20, expected: 20 },
+              { input: 40, expected: 40 },
+              { input: 60, expected: 59 },
+              { input: 80, expected: 59 },
+            ];
+
+            var unit = 'mm';
+
+            for (var i = 0; i < data.length; i++) {
+              var d = data[i];
+              test(d.input.toString(), dataTest(unit, d.input, d.expected));
+            }
+          });
+
+          suite('seconds', function () {
+            var data = [
+              { input: -20, expected: 0 },
+              { input: 0, expected: 0 },
+              { input: 20, expected: 20 },
+              { input: 40, expected: 40 },
+              { input: 60, expected: 59 },
+              { input: 80, expected: 59 },
+            ];
+
+            var unit = 'ss';
+
+            for (var i = 0; i < data.length; i++) {
+              var d = data[i];
+              test(d.input.toString(), dataTest(unit, d.input, d.expected));
+            }
+          });
+
+          suite('hours (12)', function () {
+            var data = [
+              { input: -6, expected: 1 },
+              { input: 1, expected: 1 },
+              { input: 6, expected: 6 },
+              { input: 12, expected: 12 },
+              { input: 18, expected: 12 },
+              { input: 24, expected: 12 },
+            ];
+
+            var unit = 'hh';
+
+            for (var i = 0; i < data.length; i++) {
+              var d = data[i];
+              test(d.input.toString(), dataTest(unit, d.input, d.expected));
+            }
+          });
+
+          suite('hours (24)', function () {
+            var data = [
+              { input: -6, expected: 0 },
+              { input: 0, expected: 0 },
+              { input: 6, expected: 6 },
+              { input: 12, expected: 12 },
+              { input: 18, expected: 18 },
+              { input: 24, expected: 23 },
+            ];
+
+            var unit = 'HH';
+
+            for (var i = 0; i < data.length; i++) {
+              var d = data[i];
+              test(d.input.toString(), dataTest(unit, d.input, d.expected));
+            }
+          });
+        });
+      });
+
+      suite('increase', function () {
+        var dataTest = function (unit, value, increment, expected) {
+          return function (done) {
+            el.unit = unit;
+            el.value = value;
+            el.increment = increment;
+            el.increase();
+            assert.equal(expected, el.value, 'when increasing "' + unit + '" from ' + value + ' by ' + increment + ' expected ' + expected + ' not ' + el.value);
+            done();
+          };
+        };
+
+        suite('minutes', function () {
+          var data = [
+            { value: 31, increment: 5, expected: 35 },
+            { value: 31, increment: 10, expected: 40 },
+            { value: 55, increment: 5, expected: 0 },
+            { value: 55, increment: 10, expected: 0 },
+          ];
+
+          var unit = 'mm';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' + ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+
+        suite('seconds', function () {
+          var data = [
+            { value: 31, increment: 5, expected: 35 },
+            { value: 31, increment: 10, expected: 40 },
+            { value: 55, increment: 5, expected: 0 },
+            { value: 55, increment: 10, expected: 0 },
+          ];
+
+          var unit = 'ss';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' + ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+
+        suite('hours (12)', function () {
+          var data = [
+            { value: 11, increment: 1, expected: 12 },
+            { value: 11, increment: 2, expected: 12 },
+            { value: 8, increment: 5, expected: 10 },
+            { value: 12, increment: 1, expected: 1 },
+          ];
+
+          var unit = 'hh';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' + ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+
+        suite('hours (24)', function () {
+          var data = [
+            { value: 22, increment: 1, expected: 23 },
+            { value: 22, increment: 2, expected: 0 },
+            { value: 23, increment: 1, expected: 0 },
+            { value: 0, increment: 1, expected: 1 },
+          ];
+
+          var unit = 'HH';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' + ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+      });
+
+      suite('decrease', function () {
+        var dataTest = function (unit, value, increment, expected) {
+          return function (done) {
+            el.unit = unit;
+            el.value = value;
+            el.increment = increment;
+            el.decrease();
+            assert.equal(expected, el.value, 'when decreasing "' + unit + '" from ' + value + ' by ' + increment + ' expected ' + expected + ' not ' + el.value);
+            done();
+          };
+        };
+
+        suite('minutes', function () {
+          var data = [
+            { value: 37, increment: 5, expected: 35 },
+            { value: 37, increment: 10, expected: 30 },
+            { value: 5, increment: 5, expected: 0 },
+            { value: 5, increment: 10, expected: 0 },
+          ];
+
+          var unit = 'mm';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' - ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+
+        suite('seconds', function () {
+          var data = [
+            { value: 37, increment: 5, expected: 35 },
+            { value: 37, increment: 10, expected: 30 },
+            { value: 5, increment: 5, expected: 0 },
+            { value: 5, increment: 10, expected: 0 },
+          ];
+
+          var unit = 'ss';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' - ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+
+        suite('hours (12)', function () {
+          var data = [
+            { value: 1, increment: 1, expected: 12 },
+            { value: 1, increment: 2, expected: 12 },
+            { value: 2, increment: 1, expected: 1 },
+            { value: 12, increment: 1, expected: 11 },
+          ];
+
+          var unit = 'hh';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' - ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+
+        suite('hours (24)', function () {
+          var data = [
+            { value: 2, increment: 1, expected: 1 },
+            { value: 1, increment: 1, expected: 0 },
+            { value: 1, increment: 2, expected: 0 },
+            { value: 0, increment: 1, expected: 23 },
+          ];
+
+          var unit = 'HH';
+
+          for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            test(d.value + ' - ' + d.increment + ' = ' + d.expected, dataTest(unit, d.value, d.increment, d.expected));
+          }
+        });
+      });
+
+      suite('manual', function () {
+        var spy;
+
+        setup(function () {
+          spy = sinon.spy(el, '_validate');
+        });
+
+        teardown(function () {
+          el._validate.restore();
+        });
+
+        test('focus', function (done) {
+          MockInteractions.tap(el.$.pages);
+          assert.equal(0, el._page, 'expected `_page` to be set to 0 to show the input on click');
+          assert.equal(el.$.input, document.activeElement, 'expected input to have focus');
+          done();
+        });
+
+        suite('blur', function () {
+          var input;
+          var blurSpy;
+          var changeSpy;
+          var min;
+          var max;
+
+          setup(function () {
+            input = el.$.input;
+            el._page = 0;
+            blurSpy = sinon.spy(el, '_blur');
+            changeSpy = sinon.spy(el, '_change');
+            min = el._constraints[el.unit].min;
+            max = el._constraints[el.unit].max;
+          });
+
+          teardown(function () {
+            el._blur.restore();
+          });
+
+          test('called', function (done) {
+            MockInteractions.blur(input);
+            assert(blurSpy.calledOnce, 'expected `_blur` to be called');
+            done();
+          });
+
+          test('value', function (done) {
+            input.value = 13;
+            el._blur();
+            assert(changeSpy.withArgs("13").calledOnce, 'expected `_change(13)` to be called');
+            done();
+          });
+
+          test('min', function (done) {
+            input.value = min - 1;
+            el._blur();
+            assert(changeSpy.withArgs(min).calledOnce, 'expected `_change(' + min + ')` to be called (coerce to min)');
+            done();
+          });
+
+          test('max', function (done) {
+            input.value = max + 1;
+            el._blur();
+            assert(changeSpy.withArgs(max).calledOnce, 'expected `_change(' + max + ')` to be called (coerce to max)');
+            done();
+          });
+
+          test('empty', function (done) {
+            el._blur();
+            assert(changeSpy.withArgs(30).calledOnce, 'expected `_change(30)` to be called (goes back to original value when empty)');
+            done();
+          });
+        });
+
+        suite('validate', function () {
+          test('called', function (done) {
+            for (var i = 0; i < 3; i++)
+              MockInteractions.pressAndReleaseKeyOn(el.$.input, 49);
+
+            assert(spy.calledThrice, 'expected `_validate()` to be called for each key press');
+            done();
+          });
+
+          suite('regex', function () {
+            var mockEvent;
+
+            setup(function () {
+              mockEvent = {
+                target: el.$.input,
+                preventDefault: sinon.spy()
+              };
+            });
+
+            teardown(function () {
+              mockEvent = null;
+            });
+
+            var dataTest = function (key, expected) {
+              return function (done) {
+                mockEvent.key = key;
+                el._validate(mockEvent);
+
+                if (expected)
+                  assert(mockEvent.preventDefault.notCalled, 'regex should have allowed "' + key + '"');
+                else
+                  assert(mockEvent.preventDefault.calledOnce, 'regex should not have allowed "' + key + '"');
+
+                done();
+              };
+            };
+
+            var data = [
+              { key: '0', expected: true },
+              { key: '3', expected: true },
+              { key: '6', expected: true },
+              { key: '9', expected: true },
+              { key: 'Backspace', expected: true },
+              { key: 'Delete', expected: true },
+              { key: 'ArrowLeft', expected: true },
+              { key: 'ArrowRight', expected: true },
+              { key: 'ArrowUp', expected: false },
+              { key: 'ArrowDown', expected: false },
+              { key: 'A', expected: false },
+              { key: 'Z', expected: false },
+              { key: 'a', expected: false },
+              { key: 'z', expected: false },
+              { key: 'Space', expected: false },
+              { key: '!', expected: false },
+              { key: '+', expected: false },
+            ];
+
+            for (var i = 0; i < data.length; i++)
+              test(data[i].key, dataTest(data[i].key, data[i].expected));
+          });
+        });
+      });
+
+      test('change', function (done) {
+        el._change(5);
+        assert.equal(2, el._page, 'expected to be on page 2');
+        assert.equal(5, el.value, 'expected value to have been updated');
+        done();
+      });
+    });
+  </script>
+</body>
+
+</html>
