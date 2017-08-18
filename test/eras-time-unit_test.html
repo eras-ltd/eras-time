@@ -293,16 +293,6 @@
       });
 
       suite('manual', function () {
-        var spy;
-
-        setup(function () {
-          spy = sinon.spy(el, '_validate');
-        });
-
-        teardown(function () {
-          el._validate.restore();
-        });
-
         test('focus', function (done) {
           MockInteractions.tap(el.$.pages);
           assert.equal(0, el._page, 'expected `_page` to be set to 0 to show the input on click');
@@ -361,68 +351,6 @@
             el._blur();
             assert(changeSpy.withArgs(30).calledOnce, 'expected `_change(30)` to be called (goes back to original value when empty)');
             done();
-          });
-        });
-
-        suite('validate', function () {
-          test('called', function (done) {
-            for (var i = 0; i < 3; i++)
-              MockInteractions.pressAndReleaseKeyOn(el.$.input, 49);
-
-            assert(spy.calledThrice, 'expected `_validate()` to be called for each key press');
-            done();
-          });
-
-          suite('regex', function () {
-            var mockEvent;
-
-            setup(function () {
-              mockEvent = {
-                target: el.$.input,
-                preventDefault: sinon.spy()
-              };
-            });
-
-            teardown(function () {
-              mockEvent = null;
-            });
-
-            var dataTest = function (key, expected) {
-              return function (done) {
-                mockEvent.key = key;
-                el._validate(mockEvent);
-
-                if (expected)
-                  assert(mockEvent.preventDefault.notCalled, 'regex should have allowed "' + key + '"');
-                else
-                  assert(mockEvent.preventDefault.calledOnce, 'regex should not have allowed "' + key + '"');
-
-                done();
-              };
-            };
-
-            var data = [
-              { key: '0', expected: true },
-              { key: '3', expected: true },
-              { key: '6', expected: true },
-              { key: '9', expected: true },
-              { key: 'Backspace', expected: true },
-              { key: 'Delete', expected: true },
-              { key: 'ArrowLeft', expected: true },
-              { key: 'ArrowRight', expected: true },
-              { key: 'ArrowUp', expected: false },
-              { key: 'ArrowDown', expected: false },
-              { key: 'A', expected: false },
-              { key: 'Z', expected: false },
-              { key: 'a', expected: false },
-              { key: 'z', expected: false },
-              { key: 'Space', expected: false },
-              { key: '!', expected: false },
-              { key: '+', expected: false },
-            ];
-
-            for (var i = 0; i < data.length; i++)
-              test(data[i].key, dataTest(data[i].key, data[i].expected));
           });
         });
       });

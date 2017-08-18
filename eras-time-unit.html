@@ -1,6 +1,7 @@
 <link rel='import' href='../polymer/polymer.html'>
 <link rel='import' href='../eras-external/moment.html'>
 <link rel='import' href='../iron-flex-layout/iron-flex-layout-classes.html'>
+<link rel='import' href='../iron-input/iron-input.html'>
 <link rel='import' href='../neon-animation/animations/slide-down-animation.html' />
 <link rel='import' href='../neon-animation/animations/slide-from-bottom-animation.html' />
 <link rel='import' href='../neon-animation/animations/slide-from-top-animation.html' />
@@ -90,7 +91,7 @@ Property|Description|Default
       </div>
 
       <neon-animated-pages id='pages' selected='{{_page}}' on-tap='_focus' entry-animation='{{_entryAnimation}}' exit-animation='{{_exitAnimation}}'>
-        <input id='input' type='text' on-blur='_blur' maxlength='2' on-keydown='_validate' autocomplete='off' />
+        <input is='iron-input' prevent-invalid-input allowed-pattern='[0-9]' id='input' type='text' on-blur='_blur' maxlength='2' autocomplete='off' />
         <div index='1'>X</div>
         <div index='2'>Y</div>
       </neon-animated-pages>
@@ -308,15 +309,6 @@ Property|Description|Default
           newValue = min;
 
         this._change(newValue);
-      },
-
-      /**
-       * Prevents non numerics from being entered, but allows deletion and navigation.
-       */
-      _validate: function (e) {
-        var regex = /^([0-9]|Backspace|Delete|ArrowLeft|ArrowRight)$/;
-        if (!regex.test(e.key))
-          e.preventDefault();
       },
 
       /**
